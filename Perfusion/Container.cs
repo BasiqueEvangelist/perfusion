@@ -67,19 +67,19 @@ namespace Perfusion
 
         public object GetInstance(Type t)
         {
-            if (objects.Any(x => x.Key.GetInterfaces().Contains(t)))
-            {
-                if (objects.Sum(x => (x.Key.GetInterfaces().Contains(t)) ? 1 : 0) > 1)
-                    throw new PerfusionException("Many possible objects");
-                t = objects.First(x => x.Key.GetInterfaces().Contains(t)).Key;
-            }
-            if (!objects.ContainsKey(t))
-                throw new PerfusionException("Object of type " + t.FullName + " not found");
-            if (objects[t].IsSingleton && objects[t].HasBeenInstantiated) return objects[t].Value;
-            object o = objects[t].Factory();
+            var possibleImplementors = objects.Where(x => x.Key.GetInterfaces().Concat(GetHierarchy(x.Key)).Contains(t)).ToArray();
+
+            if (possibleImplementors.Length > 1)
+                throw new PerfusionException("Many possible implementors: " + string.Join(", ", possibleImplementors));
+            if (possibleImplementors.Length == 0)
+                throw new PerfusionException("Object implementing " + t.FullName + " not found");
+
+            Type impl = possibleImplementors[0].Key;
+            if (objects[impl].IsSingleton && objects[impl].HasBeenInstantiated) return objects[impl].Value;
+            object o = objects[impl].Factory();
             resolveObj(o);
-            objects[t].HasBeenInstantiated = false;
-            objects[t].Value = o;
+            objects[impl].HasBeenInstantiated = true;
+            objects[impl].Value = o;
             return o;
         }
 
@@ -87,6 +87,16 @@ namespace Perfusion
         {
             AddInstance(this);
         }
+
+        #region service 
+
+        IEnumerable<Type> GetHierarchy(Type T)
+        {
+            for (; T != null; T = T.BaseType)
+                yield return T;
+        }
+
+        #endregion
     }
 
     public class ObjectInfo
@@ -101,4 +111,5 @@ namespace Perfusion
     {
         Singleton, Transient
     }
+
 }
