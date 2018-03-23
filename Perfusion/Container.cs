@@ -11,10 +11,10 @@ namespace Perfusion
 
         Dictionary<Type, ObjectInfo> objects = new Dictionary<Type, ObjectInfo>();
 
-        public void Add<T>(Func<T> F, InjectionType type) where T : class
+        public void Add<TContract>(Func<TContract> F, InjectionType type = InjectionType.Singleton) where TContract : class
         {
             if (type != InjectionType.Singleton && type != InjectionType.Transient) throw new PerfusionException("Invalid injection type " + type);
-            objects.Add(typeof(T), new ObjectInfo()
+            objects.Add(typeof(TContract), new ObjectInfo()
             {
                 Factory = F,
                 IsSingleton = type == InjectionType.Singleton,
@@ -22,7 +22,7 @@ namespace Perfusion
             });
         }
 
-        public void Add<T>(T f, InjectionType type) where T : class => Add(() => f, type);
+        public void AddInstance<TContract>(TContract f) where TContract : class => Add(() => f, InjectionType.Singleton);
 
         private void resolveObj(object o)
         {
@@ -85,7 +85,7 @@ namespace Perfusion
 
         public Container()
         {
-            Add(this, InjectionType.Singleton);
+            AddInstance(this);
         }
     }
 
