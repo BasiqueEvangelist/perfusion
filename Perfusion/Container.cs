@@ -31,8 +31,6 @@ namespace Perfusion
                 {
                     if (f.FieldType == o.GetType())
                         throw new PerfusionException("Dependency loop in " + o.GetType());
-                    if (!objects.ContainsKey(f.FieldType))
-                        throw new PerfusionException("Object of type " + f.FieldType.FullName + " not found");
                     f.SetValue(o, GetInstance(f.FieldType));
                 }
             }
@@ -42,8 +40,6 @@ namespace Perfusion
                 {
                     if (p.PropertyType == o.GetType())
                         throw new PerfusionException("Dependency loop in " + o.GetType());
-                    if (!objects.ContainsKey(p.PropertyType))
-                        throw new PerfusionException("Object of type " + p.PropertyType.FullName + " not found");
                     p.SetValue(o, GetInstance(p.PropertyType));
                 }
             }
@@ -57,8 +53,6 @@ namespace Perfusion
                     {
                         if (v.ParameterType == o.GetType())
                             throw new PerfusionException("Dependency loop in " + o.GetType());
-                        if (!objects.ContainsKey(v.ParameterType))
-                            throw new PerfusionException("Object of type " + v.ParameterType.FullName + " not found");
                         param[i] = GetInstance(v.ParameterType);
                         i++;
                     }
