@@ -7,8 +7,9 @@ namespace Perfusion
 {
     public class Container
     {
-        Dictionary<Type, ObjectInfo> objects = new Dictionary<Type, ObjectInfo>();
+        public const BindingFlags ALL_INSTANCE = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
+        Dictionary<Type, ObjectInfo> objects = new Dictionary<Type, ObjectInfo>();
 
         public void Add<T>(Func<T> F, InjectionType type) where T : class
         {
@@ -25,25 +26,26 @@ namespace Perfusion
 
         private void resolveObj(object o)
         {
-            foreach (FieldInfo f in o.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
+            Type t = o.GetType();
+            foreach (FieldInfo f in t.GetFields(ALL_INSTANCE))
             {
                 if (f.CustomAttributes.Any(x => x.AttributeType == typeof(InjectAttribute)))
                 {
-                    if (f.FieldType == o.GetType())
+                    if (f.FieldType == t)
                         throw new PerfusionException("Dependency loop in " + o.GetType());
                     f.SetValue(o, GetInstance(f.FieldType));
                 }
             }
-            foreach (PropertyInfo p in o.GetType().GetProperties(BindingFlags.Instance | BindingFlags.NonPublic))
+            foreach (PropertyInfo p in t.GetProperties(ALL_INSTANCE))
             {
                 if (p.CustomAttributes.Any(x => x.AttributeType == typeof(InjectAttribute)))
                 {
-                    if (p.PropertyType == o.GetType())
+                    if (p.PropertyType == t)
                         throw new PerfusionException("Dependency loop in " + o.GetType());
                     p.SetValue(o, GetInstance(p.PropertyType));
                 }
             }
-            foreach (MethodInfo m in o.GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic))
+            foreach (MethodInfo m in t.GetMethods(ALL_INSTANCE))
             {
                 if (m.CustomAttributes.Any(x => x.AttributeType == typeof(InjectAttribute)))
                 {
@@ -51,7 +53,7 @@ namespace Perfusion
                     int i = 0;
                     foreach (ParameterInfo v in m.GetParameters())
                     {
-                        if (v.ParameterType == o.GetType())
+                        if (v.ParameterType == t)
                             throw new PerfusionException("Dependency loop in " + o.GetType());
                         param[i] = GetInstance(v.ParameterType);
                         i++;

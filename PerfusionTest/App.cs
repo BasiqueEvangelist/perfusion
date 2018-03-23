@@ -8,7 +8,7 @@ namespace PerfusionTest
         [Inject]
         Random random;
         [Inject]
-        Container c;
+        public Container c { get; set; }
 
         [Inject]
         Container cc
