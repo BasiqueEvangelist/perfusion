@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\PDI\PDI.csproj" />
+    <ProjectReference Include="..\Perfusion\Perfusion.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

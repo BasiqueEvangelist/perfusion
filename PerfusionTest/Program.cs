@@ -1,7 +1,7 @@
 ﻿using System;
-using PDI;
+using Perfusion;
 
-namespace PDITest
+namespace PerfusionTest
 {
     static class Program
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace PDI
+namespace Perfusion
 {
     public class Container
     {
@@ -12,7 +12,7 @@ namespace PDI
 
         public void Add<T>(Func<T> F, InjectionType type) where T : class
         {
-            if (type != InjectionType.Singleton && type != InjectionType.Transient) throw new NotSupportedException("Invalid injection type " + type);
+            if (type != InjectionType.Singleton && type != InjectionType.Transient) throw new PerfusionException("Invalid injection type " + type);
             objects.Add(typeof(T), new ObjectInfo()
             {
                 Factory = F,
@@ -30,9 +30,9 @@ namespace PDI
                 if (f.CustomAttributes.Any(x => x.AttributeType == typeof(InjectAttribute)))
                 {
                     if (f.FieldType == o.GetType())
-                        throw new PDIException("Dependency loop in " + o.GetType());
+                        throw new PerfusionException("Dependency loop in " + o.GetType());
                     if (!objects.ContainsKey(f.FieldType))
-                        throw new PDIException("Object of type " + f.FieldType.FullName + " not found");
+                        throw new PerfusionException("Object of type " + f.FieldType.FullName + " not found");
                     f.SetValue(o, GetInstance(f.FieldType));
                 }
             }
@@ -43,7 +43,7 @@ namespace PDI
         public object GetInstance(Type t)
         {
             if (!objects.ContainsKey(t))
-                throw new PDIException("Object of type " + t.FullName + " not found");
+                throw new PerfusionException("Object of type " + t.FullName + " not found");
             if (objects[t].IsSingleton && objects[t].HasBeenInstantiated) return objects[t].Value;
             object o = objects[t].Factory();
             resolveObj(o);

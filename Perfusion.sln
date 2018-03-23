@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDI", "PDI\PDI.csproj", "{D04BA290-8B26-42F7-94A9-199BD97F4613}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Perfusion", "Perfusion\Perfusion.csproj", "{D04BA290-8B26-42F7-94A9-199BD97F4613}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDITest", "PDITest\PDITest.csproj", "{26C54968-4865-4D4A-81B4-74A164AAFFDB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerfusionTest", "PerfusionTest\PerfusionTest.csproj", "{26C54968-4865-4D4A-81B4-74A164AAFFDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
