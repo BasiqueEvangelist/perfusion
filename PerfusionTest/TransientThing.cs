@@ -3,7 +3,7 @@ using Perfusion;
 
 namespace PerfusionTest
 {
-    public class TransientThing
+    public class TransientThing : ITransientThing
     {
         [Inject]
         Random random;
@@ -14,5 +14,10 @@ namespace PerfusionTest
             if (!intint.HasValue) intint = random.Next();
             return intint.Value;
         }
+    }
+
+    public interface ITransientThing
+    {
+        int GetInt();
     }
 }

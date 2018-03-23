@@ -71,6 +71,12 @@ namespace Perfusion
 
         public object GetInstance(Type t)
         {
+            if (objects.Any(x => x.Key.GetInterfaces().Contains(t)))
+            {
+                if (objects.Sum(x => (x.Key.GetInterfaces().Contains(t)) ? 1 : 0) > 1)
+                    throw new PerfusionException("Many possible objects");
+                t = objects.First(x => x.Key.GetInterfaces().Contains(t)).Key;
+            }
             if (!objects.ContainsKey(t))
                 throw new PerfusionException("Object of type " + t.FullName + " not found");
             if (objects[t].IsSingleton && objects[t].HasBeenInstantiated) return objects[t].Value;

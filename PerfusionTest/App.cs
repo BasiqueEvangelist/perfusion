@@ -26,13 +26,13 @@ namespace PerfusionTest
             Console.WriteLine("I got a random, does it work? " + r.Next());
             Console.WriteLine("And is it equal to the previous one? " + (r == random).ToString());
             c.Add(() => new TransientThing(), InjectionType.Transient);
-            TransientThing t = c.GetInstance<TransientThing>();
+            ITransientThing t = c.GetInstance<ITransientThing>();
             Console.WriteLine(t.GetInt());
             Console.WriteLine(t.GetInt());
-            t = c.GetInstance<TransientThing>();
+            t = c.GetInstance<ITransientThing>();
             Console.WriteLine(t.GetInt());
             Console.WriteLine(t.GetInt());
-            t = c.GetInstance<TransientThing>();
+            t = c.GetInstance<ITransientThing>();
             Console.WriteLine(t.GetInt());
             Console.WriteLine(t.GetInt());
         }
