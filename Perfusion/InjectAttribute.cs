@@ -5,6 +5,5 @@ namespace Perfusion
     {
         public InjectAttribute() { }
 
-        public bool HasBeenResolved;
     }
 }
