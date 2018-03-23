@@ -10,6 +10,15 @@ namespace PerfusionTest
         [Inject]
         Container c;
 
+        [Inject]
+        Container cc
+        {
+            set
+            {
+                Console.WriteLine("set, " + value);
+            }
+        }
+
         public void Run()
         {
             Console.WriteLine("This is after dependency injection, as I can use Random: " + random.Next());
