@@ -27,5 +27,11 @@ namespace PerfusionTest
             Console.WriteLine(t.GetInt());
             Console.WriteLine(t.GetInt());
         }
+        [Inject]
+        void injectmethod(Container c, Random r)
+        {
+            Console.WriteLine("Here's a container: " + c);
+            Console.WriteLine("And a random: " + r);
+        }
     }
 }

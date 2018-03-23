@@ -36,6 +36,24 @@ namespace Perfusion
                     f.SetValue(o, GetInstance(f.FieldType));
                 }
             }
+            foreach (MethodInfo m in o.GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic))
+            {
+                if (m.CustomAttributes.Any(x => x.AttributeType == typeof(InjectAttribute)))
+                {
+                    object[] param = new object[m.GetParameters().Count()];
+                    int i = 0;
+                    foreach (ParameterInfo v in m.GetParameters())
+                    {
+                        if (v.ParameterType == o.GetType())
+                            throw new PerfusionException("Dependency loop in " + o.GetType());
+                        if (!objects.ContainsKey(v.ParameterType))
+                            throw new PerfusionException("Object of type " + v.ParameterType.FullName + " not found");
+                        param[i] = GetInstance(v.ParameterType);
+                        i++;
+                    }
+                    m.Invoke(o, param);
+                }
+            }
         }
 
         public T GetInstance<T>() where T : class => (T)GetInstance(typeof(T));
