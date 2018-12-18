@@ -52,8 +52,6 @@ namespace Perfusion
                 {
                     if (f.FieldType == t)
                         throw new PerfusionException("Dependency loop in " + o.GetType());
-                    if (!objects.ContainsKey(f.FieldType))
-                        throw new PerfusionException("Object of type " + f.FieldType.FullName + " not found");
                     bool required = (bool)f.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
                     f.SetValue(o, GetInstance(f.FieldType, required));
                 }
@@ -64,8 +62,6 @@ namespace Perfusion
                 {
                     if (p.PropertyType == t)
                         throw new PerfusionException("Dependency loop in " + o.GetType());
-                    if (!objects.ContainsKey(p.PropertyType))
-                        throw new PerfusionException("Object of type " + p.PropertyType.FullName + " not found");
                     bool required = (bool)p.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
                     p.SetValue(o, GetInstance(p.PropertyType, required));
                 }
@@ -80,8 +76,6 @@ namespace Perfusion
                     {
                         if (v.ParameterType == t)
                             throw new PerfusionException("Dependency loop in " + o.GetType());
-                        if (!objects.ContainsKey(v.ParameterType))
-                            throw new PerfusionException("Object of type " + v.ParameterType.FullName + " not found");
                         bool required = (bool)v.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
                         param[i] = GetInstance(v.ParameterType, required);
                         i++;
