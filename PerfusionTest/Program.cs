@@ -11,8 +11,6 @@ namespace PerfusionTest
         {
             c = new Container();
             c.GetInstance<App>().Run();
-
-            Console.ReadKey();
         }
     }
 }
