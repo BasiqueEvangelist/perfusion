@@ -21,6 +21,23 @@ namespace Perfusion
                 HasBeenInstantiated = false
             });
         }
+        public void Add(Type t, Func<object> F, InjectionType type = InjectionType.Singleton)
+        {
+            if (type != InjectionType.Singleton && type != InjectionType.Transient) throw new PerfusionException("Invalid injection type " + type);
+            objects.Add(t, new ObjectInfo()
+            {
+                Factory = F,
+                IsSingleton = type == InjectionType.Singleton,
+                HasBeenInstantiated = false
+            });
+        }
+        public void Add(Type t)
+        {
+            if (!tryAddGuessing(t))
+            {
+                throw new PerfusionException("Type not able to be guessed: " + t);
+            }
+        }
 
         public void AddInstance<TContract>(TContract f) where TContract : class => Add(() => f, InjectionType.Singleton);
 
@@ -63,8 +80,42 @@ namespace Perfusion
             }
         }
 
-        public T GetInstance<T>() where T : class => (T)GetInstance(typeof(T));
+        private object buildWithConstructor(Type t, ConstructorInfo c)
+        {
+            object[] paramlist = new object[c.GetParameters().Length];
+            for (int i = 0; i < paramlist.Length; i++)
+            {
+                ParameterInfo p = c.GetParameters()[i];
+                if (p.ParameterType == t)
+                    throw new PerfusionException("Dependency loop in " + t.GetType());
+                paramlist[i] = GetInstance(p.ParameterType);
+            }
+            object created = Activator.CreateInstance(t, paramlist);
+            ResolveObject(created);
+            return created;
+        }
 
+        public T GetInstance<T>() where T : class => (T)GetInstance(typeof(T));
+        private bool tryAddGuessing(Type t)
+        {
+            if (t.GetTypeInfo().DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
+            {
+                Add(t, () => Activator.CreateInstance(t));
+                return true;
+            }
+            else
+            {
+                foreach (ConstructorInfo ci in t.GetTypeInfo().DeclaredConstructors)
+                {
+                    if (ci.GetParameters().All(x => x.CustomAttributes.Any(y => y.AttributeType == typeof(InjectAttribute))))
+                    {
+                        Add(t, () => buildWithConstructor(t, ci));
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
         public object GetInstance(Type t)
         {
             var possibleImplementors = objects.Where(x => x.Key.GetInterfaces().Concat(GetHierarchy(x.Key)).Contains(t)).ToArray();
@@ -72,8 +123,23 @@ namespace Perfusion
             if (possibleImplementors.Length > 1)
                 throw new PerfusionException("Many possible implementors: " + string.Join(", ", possibleImplementors));
             if (possibleImplementors.Length == 0)
-                throw new PerfusionException("Object implementing " + t.FullName + " not found");
-
+            {
+                if (!t.IsAbstract && !t.IsInterface)
+                {
+                    if (!tryAddGuessing(t))
+                    {
+                        throw new PerfusionException("Type not able to be guessed: " + t);
+                    }
+                    else
+                    {
+                        return GetInstance(t); //use recursion
+                    }
+                }
+                else
+                {
+                    throw new PerfusionException("Object implementing " + t.FullName + " not found");
+                }
+            }
             Type impl = possibleImplementors[0].Key;
             if (objects[impl].IsSingleton && objects[impl].HasBeenInstantiated) return objects[impl].Value;
             object o = objects[impl].Factory();
