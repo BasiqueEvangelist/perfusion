@@ -24,7 +24,7 @@ namespace Perfusion
 
         public void AddInstance<TContract>(TContract f) where TContract : class => Add(() => f, InjectionType.Singleton);
 
-        private void resolveObj(object o)
+        public void ResolveObject(object o)
         {
             Type t = o.GetType();
             foreach (FieldInfo f in t.GetFields(ALL_INSTANCE))
@@ -77,7 +77,7 @@ namespace Perfusion
             Type impl = possibleImplementors[0].Key;
             if (objects[impl].IsSingleton && objects[impl].HasBeenInstantiated) return objects[impl].Value;
             object o = objects[impl].Factory();
-            resolveObj(o);
+            ResolveObject(o);
             objects[impl].HasBeenInstantiated = true;
             objects[impl].Value = o;
             return o;
