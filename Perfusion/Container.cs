@@ -52,7 +52,8 @@ namespace Perfusion
                 {
                     if (f.FieldType == t)
                         throw new PerfusionException("Dependency loop in " + o.GetType());
-                    f.SetValue(o, GetInstance(f.FieldType));
+                    bool required = (bool)f.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
+                    f.SetValue(o, GetInstance(f.FieldType, required));
                 }
             }
             foreach (PropertyInfo p in t.GetProperties(ALL_INSTANCE))
@@ -61,7 +62,8 @@ namespace Perfusion
                 {
                     if (p.PropertyType == t)
                         throw new PerfusionException("Dependency loop in " + o.GetType());
-                    p.SetValue(o, GetInstance(p.PropertyType));
+                    bool required = (bool)p.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
+                    p.SetValue(o, GetInstance(p.PropertyType, required));
                 }
             }
             foreach (MethodInfo m in t.GetMethods(ALL_INSTANCE))
@@ -74,7 +76,8 @@ namespace Perfusion
                     {
                         if (v.ParameterType == t)
                             throw new PerfusionException("Dependency loop in " + o.GetType());
-                        param[i] = GetInstance(v.ParameterType);
+                        bool required = (bool)v.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
+                        param[i] = GetInstance(v.ParameterType, required);
                         i++;
                     }
                     m.Invoke(o, param);
@@ -90,7 +93,8 @@ namespace Perfusion
                 ParameterInfo p = c.GetParameters()[i];
                 if (p.ParameterType == t)
                     throw new PerfusionException("Dependency loop in " + t.GetType());
-                paramlist[i] = GetInstance(p.ParameterType);
+                bool required = (bool)p.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
+                paramlist[i] = GetInstance(p.ParameterType, required);
             }
             object created = Activator.CreateInstance(t, paramlist);
             ResolveObject(created);
@@ -131,8 +135,19 @@ namespace Perfusion
                 return false;
             }
         }
-        public object GetInstance(Type t)
+        public object GetInstance(Type t, bool required = true)
         {
+            if (!required)
+            {
+                try
+                {
+                    return GetInstance(t);
+                }
+                catch (PerfusionException)
+                {
+                    return null;
+                }
+            }
             var possibleImplementors = objects.Where(x => x.Key.GetInterfaces().Concat(GetHierarchy(x.Key)).Contains(t)).ToArray();
 
             if (possibleImplementors.Length > 1)

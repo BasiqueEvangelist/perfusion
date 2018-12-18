@@ -34,7 +34,7 @@ namespace PerfusionTest
         abstract class AGuessableType { }
         class GuessableTypeWithConstructor
         {
-            public GuessableTypeWithConstructor([Inject]GuessableType gt)
+            public GuessableTypeWithConstructor([Inject(true)]GuessableType gt)
             {
                 Assert.NotNull(gt);
             }
@@ -102,6 +102,16 @@ namespace PerfusionTest
             Assert.IsType<TransientGuessableType>(anothero);
             Assert.NotNull(anothero);
             Assert.NotSame(o, anothero);
+        }
+        [Fact]
+        public void OptionalInjectTest()
+        {
+            Container c = new Container();
+            object o = c.GetInstance(typeof(GuessableType), false);
+            Assert.IsType<GuessableType>(o);
+            Assert.NotNull(o);
+            object anothero = c.GetInstance(typeof(string), false);
+            Assert.Null(anothero);
         }
     }
 }
