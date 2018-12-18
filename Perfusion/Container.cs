@@ -43,7 +43,7 @@ namespace Perfusion
 
         public void AddInstance<TContract>(TContract f) where TContract : class => Add(() => f, InjectionType.Singleton);
 
-        public void ResolveObject(object o)
+        public T ResolveObject<T>(T o)
         {
             Type t = o.GetType();
             foreach (FieldInfo f in t.GetFields(ALL_INSTANCE))
@@ -89,6 +89,7 @@ namespace Perfusion
                     m.Invoke(o, param);
                 }
             }
+            return o;
         }
 
         private object buildWithConstructor(Type t, ConstructorInfo c)
