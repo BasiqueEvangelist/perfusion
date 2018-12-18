@@ -11,8 +11,9 @@ namespace Perfusion
 
         Dictionary<Type, ObjectInfo> objects = new Dictionary<Type, ObjectInfo>();
 
-        public void Add<TContract>(Func<TContract> F, InjectionType type = InjectionType.Singleton) where TContract : class
+        public void Add<TContract>(Func<TContract> F, InjectionType type = InjectionType.Infer) where TContract : class
         {
+            if (type == InjectionType.Infer) type = guessInjectionType(typeof(TContract));
             if (type != InjectionType.Singleton && type != InjectionType.Transient) throw new PerfusionException("Invalid injection type " + type);
             objects.Add(typeof(TContract), new ObjectInfo()
             {
@@ -21,8 +22,9 @@ namespace Perfusion
                 HasBeenInstantiated = false
             });
         }
-        public void Add(Type t, Func<object> F, InjectionType type = InjectionType.Singleton)
+        public void Add(Type t, Func<object> F, InjectionType type = InjectionType.Infer)
         {
+            if (type == InjectionType.Infer) type = guessInjectionType(t);
             if (type != InjectionType.Singleton && type != InjectionType.Transient) throw new PerfusionException("Invalid injection type " + type);
             objects.Add(t, new ObjectInfo()
             {
@@ -96,6 +98,19 @@ namespace Perfusion
         }
 
         public T GetInstance<T>() where T : class => (T)GetInstance(typeof(T));
+        private InjectionType guessInjectionType(Type t)
+        {
+            if (t.CustomAttributes.Any(x => x.AttributeType == typeof(SingletonAttribute)) &&
+                t.CustomAttributes.Any(x => x.AttributeType == typeof(TransientAttribute)))
+            {
+                throw new PerfusionException("[Singleton] and [Transient] collide in " + t);
+            }
+            else if (t.CustomAttributes.Any(x => x.AttributeType == typeof(SingletonAttribute)))
+                return InjectionType.Singleton;
+            else if (t.CustomAttributes.Any(x => x.AttributeType == typeof(TransientAttribute)))
+                return InjectionType.Transient;
+            else return InjectionType.Singleton;
+        }
         private bool tryAddGuessing(Type t)
         {
             if (t.GetTypeInfo().DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
@@ -175,7 +190,7 @@ namespace Perfusion
 
     public enum InjectionType
     {
-        Singleton, Transient
+        Infer, Singleton, Transient
     }
 
 }
