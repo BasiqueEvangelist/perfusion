@@ -41,6 +41,8 @@ namespace Perfusion
             }
         }
 
+        public void Add<T>() => Add(typeof(T));
+
         public void AddInstance<TContract>(TContract f) where TContract : class => Add(() => f, InjectionType.Singleton);
 
         public T ResolveObject<T>(T o)
