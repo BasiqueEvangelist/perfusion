@@ -76,7 +76,7 @@ namespace Perfusion
                     {
                         if (v.ParameterType == t)
                             throw new PerfusionException("Dependency loop in " + o.GetType());
-                        bool required = (bool)v.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
+                        bool required = (bool)m.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
                         param[i] = GetInstance(v.ParameterType, required);
                         i++;
                     }
