@@ -94,8 +94,7 @@ namespace Perfusion
                 ParameterInfo p = c.GetParameters()[i];
                 if (p.ParameterType == t)
                     throw new PerfusionException("Dependency loop in " + t.GetType());
-                bool required = (bool)p.CustomAttributes.First(x => x.AttributeType == typeof(InjectAttribute)).ConstructorArguments[0].Value;
-                paramlist[i] = GetInstance(p.ParameterType, required);
+                paramlist[i] = GetInstance(p.ParameterType);
             }
             object created = Activator.CreateInstance(t, paramlist);
             ResolveObject(created);
@@ -127,7 +126,7 @@ namespace Perfusion
             {
                 foreach (ConstructorInfo ci in t.GetTypeInfo().DeclaredConstructors)
                 {
-                    if (ci.GetParameters().All(x => x.CustomAttributes.Any(y => y.AttributeType == typeof(InjectAttribute))))
+                    if (ci.CustomAttributes.Any(x => x.AttributeType == typeof(InjectAttribute)))
                     {
                         Add(t, () => buildWithConstructor(t, ci));
                         return true;

@@ -34,7 +34,8 @@ namespace PerfusionTest
         abstract class AGuessableType { }
         class GuessableTypeWithConstructor
         {
-            public GuessableTypeWithConstructor([Inject(true)]GuessableType gt)
+            [Inject]
+            public GuessableTypeWithConstructor(GuessableType gt)
             {
                 Assert.NotNull(gt);
             }
