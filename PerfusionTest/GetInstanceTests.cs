@@ -3,24 +3,8 @@ using Xunit;
 
 namespace PerfusionTest
 {
-    public class PerfusionTests
+    public class GetInstanceTests
     {
-        [Fact]
-        public void GuessType()
-        {
-            Container c = new Container();
-            object gt = c.GetInstance(typeof(GuessableType));
-            Assert.NotNull(gt);
-            Assert.IsType<GuessableType>(gt);
-        }
-        [Fact]
-        public void GuessTypeWithConstructor()
-        {
-            Container c = new Container();
-            object gt = c.GetInstance(typeof(GuessableTypeWithConstructor));
-            Assert.NotNull(gt);
-            Assert.IsType<GuessableTypeWithConstructor>(gt);
-        }
         class GuessableType : AGuessableType, IGuessableType
         {
             public GuessableType() { }
@@ -91,28 +75,6 @@ namespace PerfusionTest
             Assert.IsType<GuessableType>(anothero);
             Assert.NotNull(anothero);
             Assert.Same(o, anothero);
-        }
-        [Fact]
-        public void GuessInjectionTypeTest()
-        {
-            Container c = new Container();
-            object o = c.GetInstance(typeof(TransientGuessableType));
-            Assert.IsType<TransientGuessableType>(o);
-            Assert.NotNull(o);
-            object anothero = c.GetInstance(typeof(TransientGuessableType));
-            Assert.IsType<TransientGuessableType>(anothero);
-            Assert.NotNull(anothero);
-            Assert.NotSame(o, anothero);
-        }
-        [Fact]
-        public void OptionalInjectTest()
-        {
-            Container c = new Container();
-            object o = c.GetInstance(typeof(GuessableType), false);
-            Assert.IsType<GuessableType>(o);
-            Assert.NotNull(o);
-            object anothero = c.GetInstance(typeof(string), false);
-            Assert.Null(anothero);
         }
     }
 }
