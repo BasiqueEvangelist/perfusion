@@ -10,7 +10,9 @@ namespace Perfusion
         public const BindingFlags ALL_INSTANCE = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
         Dictionary<Type, ObjectInfo> objects = new Dictionary<Type, ObjectInfo>();
+        public IReadOnlyDictionary<Type, ObjectInfo> RegisteredObjects => objects;
 
+        #region AddX
         public void AddSingleton<TContract>(Func<TContract> F) where TContract : class
         {
             AddSingleton(typeof(TContract), F);
@@ -42,10 +44,19 @@ namespace Perfusion
                 throw new PerfusionException("Type not able to be guessed: " + t);
             }
         }
-
         public void Add<T>() => Add(typeof(T));
 
         public void AddInstance<TContract>(TContract f) where TContract : class => AddSingleton(() => f);
+
+        public void AddInfo<T>(ObjectInfo i)
+        {
+            objects[typeof(T)] = i;
+        }
+        public void AddInfo(Type t, ObjectInfo i)
+        {
+            objects[t] = i;
+        }
+        #endregion
 
         public T ResolveObject<T>(T o)
         {

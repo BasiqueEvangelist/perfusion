@@ -93,5 +93,13 @@ namespace PerfusionTest
             Assert.NotNull(anothero);
             Assert.Same(o, anothero);
         }
+        [Fact]
+        public void AddInfoTest()
+        {
+            Container c = new Container();
+            ObjectInfo oi = new SingletonInfo(() => null);
+            c.AddInfo<GuessableType>(oi);
+            Assert.Contains(oi, c.RegisteredObjects.Values);
+        }
     }
 }
