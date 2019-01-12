@@ -28,7 +28,7 @@ namespace PerfusionTest
         public void SingletonTest()
         {
             Container c = new Container();
-            c.Add(() => new GuessableType(), InjectionType.Singleton);
+            c.AddSingleton(() => new GuessableType());
             object o = c.GetInstance(typeof(GuessableType));
             Assert.IsType<GuessableType>(o);
             Assert.NotNull(o);
@@ -41,7 +41,7 @@ namespace PerfusionTest
         public void TransientTest()
         {
             Container c = new Container();
-            c.Add(() => new GuessableType(), InjectionType.Transient);
+            c.AddTransient(() => new GuessableType());
             object o = c.GetInstance(typeof(GuessableType));
             Assert.IsType<GuessableType>(o);
             Assert.NotNull(o);
@@ -54,7 +54,7 @@ namespace PerfusionTest
         public void InterfaceTest()
         {
             Container c = new Container();
-            c.Add(() => new GuessableType(), InjectionType.Singleton);
+            c.AddSingleton(() => new GuessableType());
             object o = c.GetInstance(typeof(GuessableType));
             Assert.IsType<GuessableType>(o);
             Assert.NotNull(o);
@@ -67,7 +67,7 @@ namespace PerfusionTest
         public void SuperclassTest()
         {
             Container c = new Container();
-            c.Add(() => new GuessableType(), InjectionType.Singleton);
+            c.AddSingleton(() => new GuessableType());
             object o = c.GetInstance(typeof(GuessableType));
             Assert.IsType<GuessableType>(o);
             Assert.NotNull(o);

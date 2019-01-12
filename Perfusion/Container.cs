@@ -11,27 +11,21 @@ namespace Perfusion
 
         Dictionary<Type, ObjectInfo> objects = new Dictionary<Type, ObjectInfo>();
 
-        public void Add<TContract>(Func<TContract> F, InjectionType type = InjectionType.Infer) where TContract : class
+        public void AddSingleton<TContract>(Func<TContract> F) where TContract : class
         {
-            if (type == InjectionType.Infer) type = guessInjectionType(typeof(TContract));
-            if (type != InjectionType.Singleton && type != InjectionType.Transient) throw new PerfusionException("Invalid injection type " + type);
-            objects.Add(typeof(TContract), new ObjectInfo()
-            {
-                Factory = F,
-                IsSingleton = type == InjectionType.Singleton,
-                HasBeenInstantiated = false
-            });
+            AddSingleton(typeof(TContract), F);
         }
-        public void Add(Type t, Func<object> F, InjectionType type = InjectionType.Infer)
+        public void AddSingleton(Type t, Func<object> F)
         {
-            if (type == InjectionType.Infer) type = guessInjectionType(t);
-            if (type != InjectionType.Singleton && type != InjectionType.Transient) throw new PerfusionException("Invalid injection type " + type);
-            objects.Add(t, new ObjectInfo()
-            {
-                Factory = F,
-                IsSingleton = type == InjectionType.Singleton,
-                HasBeenInstantiated = false
-            });
+            objects.Add(t, new SingletonInfo(F));
+        }
+        public void AddTransient<TContract>(Func<TContract> F) where TContract : class
+        {
+            AddTransient(typeof(TContract), F);
+        }
+        public void AddTransient(Type t, Func<object> F)
+        {
+            objects.Add(t, new TransientInfo(F));
         }
         public void Add(Type t)
         {
@@ -43,7 +37,7 @@ namespace Perfusion
 
         public void Add<T>() => Add(typeof(T));
 
-        public void AddInstance<TContract>(TContract f) where TContract : class => Add(() => f, InjectionType.Singleton);
+        public void AddInstance<TContract>(TContract f) where TContract : class => AddSingleton(() => f);
 
         public T ResolveObject<T>(T o)
         {
@@ -121,7 +115,18 @@ namespace Perfusion
         {
             if (t.GetTypeInfo().DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
             {
-                Add(t, () => Activator.CreateInstance(t));
+                InjectionType it = guessInjectionType(t);
+                switch (it)
+                {
+                    case InjectionType.Singleton:
+                        AddSingleton(t, () => Activator.CreateInstance(t));
+                        break;
+                    case InjectionType.Transient:
+                        AddTransient(t, () => Activator.CreateInstance(t));
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
                 return true;
             }
             else
@@ -130,7 +135,18 @@ namespace Perfusion
                 {
                     if (ci.CustomAttributes.Any(x => x.AttributeType == typeof(InjectAttribute)))
                     {
-                        Add(t, () => buildWithConstructor(t, ci));
+                        InjectionType it = guessInjectionType(t);
+                        switch (it)
+                        {
+                            case InjectionType.Singleton:
+                                AddSingleton(t, () => buildWithConstructor(t, ci));
+                                break;
+                            case InjectionType.Transient:
+                                AddTransient(t, () => buildWithConstructor(t, ci));
+                                break;
+                            default:
+                                throw new NotImplementedException();
+                        }
                         return true;
                     }
                 }
@@ -150,7 +166,7 @@ namespace Perfusion
                     return null;
                 }
             }
-            var possibleImplementors = objects.Where(x => x.Key.GetInterfaces().Concat(GetHierarchy(x.Key)).Contains(t)).ToArray();
+            KeyValuePair<Type, ObjectInfo>[] possibleImplementors = objects.Where(x => x.Key.GetInterfaces().Concat(GetHierarchy(x.Key)).Contains(t)).ToArray();
 
             if (possibleImplementors.Length > 1)
                 throw new PerfusionException("Many possible implementors: " + string.Join(", ", possibleImplementors));
@@ -172,13 +188,7 @@ namespace Perfusion
                     throw new PerfusionException("Object implementing " + t.FullName + " not found");
                 }
             }
-            Type impl = possibleImplementors[0].Key;
-            if (objects[impl].IsSingleton && objects[impl].HasBeenInstantiated) return objects[impl].Value;
-            object o = objects[impl].Factory();
-            ResolveObject(o);
-            objects[impl].HasBeenInstantiated = true;
-            objects[impl].Value = o;
-            return o;
+            return ResolveObject(possibleImplementors[0].Value.GetInstance());
         }
 
         public Container()
@@ -197,12 +207,40 @@ namespace Perfusion
         #endregion
     }
 
-    public class ObjectInfo
+    public abstract class ObjectInfo
     {
         public Func<object> Factory;
-        public bool IsSingleton;
-        public bool HasBeenInstantiated;
+        public abstract InjectionType Type { get; }
+        public abstract object GetInstance();
+    }
+    public class SingletonInfo : ObjectInfo
+    {
+        public override InjectionType Type => InjectionType.Singleton;
+        public bool IsInstantiated = false;
         public object Value;
+        public override object GetInstance()
+        {
+            if (!IsInstantiated)
+            {
+                IsInstantiated = true;
+                return Value = Factory();
+            }
+            else
+                return Value;
+        }
+        public SingletonInfo(Func<Object> factory)
+        {
+            Factory = factory;
+        }
+    }
+    public class TransientInfo : ObjectInfo
+    {
+        public override InjectionType Type => InjectionType.Transient;
+        public override object GetInstance() => Factory();
+        public TransientInfo(Func<Object> factory)
+        {
+            Factory = factory;
+        }
     }
 
     public enum InjectionType

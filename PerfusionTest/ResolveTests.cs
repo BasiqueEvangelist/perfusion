@@ -30,8 +30,8 @@ namespace PerfusionTest
         public void ResolveMethodTest()
         {
             Container c = new Container();
-            c.Add(() => new TypeWithMethod(), InjectionType.Singleton);
-            c.Add(() => new GuessableType(), InjectionType.Singleton);
+            c.AddSingleton(() => new TypeWithMethod());
+            c.AddSingleton(() => new GuessableType());
             TypeWithMethod t = c.GetInstance<TypeWithMethod>();
             Assert.True(t.gotCalled);
         }
@@ -44,8 +44,8 @@ namespace PerfusionTest
         public void ResolveFieldTest()
         {
             Container c = new Container();
-            c.Add(() => new TypeWithField(), InjectionType.Singleton);
-            c.Add(() => new GuessableType(), InjectionType.Singleton);
+            c.AddSingleton(() => new TypeWithField());
+            c.AddSingleton(() => new GuessableType());
             TypeWithField t = c.GetInstance<TypeWithField>();
             Assert.NotNull(t.gt);
         }
@@ -65,8 +65,8 @@ namespace PerfusionTest
         public void ResolvePropertyTest()
         {
             Container c = new Container();
-            c.Add(() => new TypeWithProperty(), InjectionType.Singleton);
-            c.Add(() => new GuessableType(), InjectionType.Singleton);
+            c.AddSingleton(() => new TypeWithProperty());
+            c.AddSingleton(() => new GuessableType());
             TypeWithProperty t = c.GetInstance<TypeWithProperty>();
             Assert.NotNull(t.gotCalled);
         }
