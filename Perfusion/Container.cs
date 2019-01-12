@@ -198,12 +198,10 @@ namespace Perfusion
     public abstract class ObjectInfo
     {
         public Func<object> Factory;
-        public abstract InjectionType Type { get; }
         public abstract object GetInstance();
     }
     public class SingletonInfo : ObjectInfo
     {
-        public override InjectionType Type => InjectionType.Singleton;
         public bool IsInstantiated = false;
         public object Value;
         public override object GetInstance()
@@ -224,7 +222,6 @@ namespace Perfusion
     }
     public class TransientInfo : ObjectInfo
     {
-        public override InjectionType Type => InjectionType.Transient;
         public override object GetInstance() => Factory();
         public TransientInfo(Func<Object> factory)
         {
@@ -234,7 +231,6 @@ namespace Perfusion
     }
     public class PoolableInfo : ObjectInfo
     {
-        public override InjectionType Type => InjectionType.Poolable;
         public override object GetInstance()
         {
             if (pool.Count < PoolSize)
@@ -264,10 +260,4 @@ namespace Perfusion
             pool = new Dictionary<object, int>(poolsize);
         }
     }
-
-    public enum InjectionType
-    {
-        Infer, Singleton, Transient, Poolable
-    }
-
 }
