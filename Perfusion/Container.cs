@@ -27,6 +27,14 @@ namespace Perfusion
         {
             objects.Add(t, new TransientInfo(F));
         }
+        public void AddPoolable<TContract>(Func<TContract> F, int poolsize) where TContract : class
+        {
+            AddPoolable(typeof(TContract), F, poolsize);
+        }
+        public void AddPoolable(Type t, Func<object> F, int poolsize)
+        {
+            objects.Add(t, new PoolableInfo(F, poolsize));
+        }
         public void Add(Type t)
         {
             if (!tryAddGuessing(t))
@@ -82,6 +90,7 @@ namespace Perfusion
             return o;
         }
 
+
         private object buildWithConstructor(Type t, ConstructorInfo c)
         {
             object[] paramlist = new object[c.GetParameters().Length];
@@ -98,35 +107,23 @@ namespace Perfusion
         }
 
         public T GetInstance<T>() where T : class => (T)GetInstance(typeof(T));
-        private InjectionType guessInjectionType(Type t)
+        private ObjectInfo guessInjectionType(Type t)
         {
-            if (t.CustomAttributes.Any(x => x.AttributeType == typeof(SingletonAttribute)) &&
-                t.CustomAttributes.Any(x => x.AttributeType == typeof(TransientAttribute)))
-            {
-                throw new PerfusionException("[Singleton] and [Transient] collide in " + t);
-            }
-            else if (t.CustomAttributes.Any(x => x.AttributeType == typeof(SingletonAttribute)))
-                return InjectionType.Singleton;
+            if (t.CustomAttributes.Any(x => x.AttributeType == typeof(SingletonAttribute)))
+                return new SingletonInfo();
             else if (t.CustomAttributes.Any(x => x.AttributeType == typeof(TransientAttribute)))
-                return InjectionType.Transient;
-            else return InjectionType.Singleton;
+                return new TransientInfo();
+            else if (t.CustomAttributes.Any(x => x.AttributeType == typeof(PoolableAttribute)))
+                return new PoolableInfo((int)(t.CustomAttributes.First(x => x.AttributeType == typeof(PoolableAttribute)).ConstructorArguments[0].Value));
+            else return new SingletonInfo();
         }
         private bool tryAddGuessing(Type t)
         {
             if (t.GetTypeInfo().DeclaredConstructors.Any(x => x.GetParameters().Length == 0))
             {
-                InjectionType it = guessInjectionType(t);
-                switch (it)
-                {
-                    case InjectionType.Singleton:
-                        AddSingleton(t, () => Activator.CreateInstance(t));
-                        break;
-                    case InjectionType.Transient:
-                        AddTransient(t, () => Activator.CreateInstance(t));
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
+                ObjectInfo oi = guessInjectionType(t);
+                oi.Factory = () => Activator.CreateInstance(t);
+                objects[t] = oi;
                 return true;
             }
             else
@@ -135,18 +132,9 @@ namespace Perfusion
                 {
                     if (ci.CustomAttributes.Any(x => x.AttributeType == typeof(InjectAttribute)))
                     {
-                        InjectionType it = guessInjectionType(t);
-                        switch (it)
-                        {
-                            case InjectionType.Singleton:
-                                AddSingleton(t, () => buildWithConstructor(t, ci));
-                                break;
-                            case InjectionType.Transient:
-                                AddTransient(t, () => buildWithConstructor(t, ci));
-                                break;
-                            default:
-                                throw new NotImplementedException();
-                        }
+                        ObjectInfo oi = guessInjectionType(t);
+                        oi.Factory = () => buildWithConstructor(t, ci);
+                        objects[t] = oi;
                         return true;
                     }
                 }
@@ -232,6 +220,7 @@ namespace Perfusion
         {
             Factory = factory;
         }
+        public SingletonInfo() { }
     }
     public class TransientInfo : ObjectInfo
     {
@@ -241,11 +230,44 @@ namespace Perfusion
         {
             Factory = factory;
         }
+        public TransientInfo() { }
+    }
+    public class PoolableInfo : ObjectInfo
+    {
+        public override InjectionType Type => InjectionType.Poolable;
+        public override object GetInstance()
+        {
+            if (pool.Count < PoolSize)
+            {
+                object o = Factory();
+                pool[o] = 1;
+                return o;
+            }
+            else
+            {
+                object least = pool.OrderBy(x => x.Value).First().Key;
+                pool[least] = pool[least] + 1;
+                return least;
+            }
+        }
+        private Dictionary<object, int> pool;
+        public int PoolSize { get; }
+        public PoolableInfo(Func<Object> factory, int poolsize)
+        {
+            Factory = factory;
+            PoolSize = poolsize;
+            pool = new Dictionary<object, int>(poolsize);
+        }
+        public PoolableInfo(int poolsize)
+        {
+            PoolSize = poolsize;
+            pool = new Dictionary<object, int>(poolsize);
+        }
     }
 
     public enum InjectionType
     {
-        Infer, Singleton, Transient
+        Infer, Singleton, Transient, Poolable
     }
 
 }

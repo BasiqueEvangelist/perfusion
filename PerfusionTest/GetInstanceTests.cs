@@ -51,6 +51,23 @@ namespace PerfusionTest
             Assert.NotSame(o, anothero);
         }
         [Fact]
+        public void PoolableTest()
+        {
+            Container c = new Container();
+            c.AddPoolable(() => new GuessableType(), 2);
+            object o = c.GetInstance(typeof(GuessableType));
+            Assert.IsType<GuessableType>(o);
+            Assert.NotNull(o);
+            object anothero = c.GetInstance(typeof(GuessableType));
+            Assert.IsType<GuessableType>(anothero);
+            Assert.NotNull(anothero);
+            Assert.NotSame(o, anothero);
+            object thirdo = c.GetInstance(typeof(GuessableType));
+            Assert.IsType<GuessableType>(thirdo);
+            Assert.NotNull(thirdo);
+            Assert.True(object.ReferenceEquals(thirdo, o) || object.ReferenceEquals(thirdo, anothero));
+        }
+        [Fact]
         public void InterfaceTest()
         {
             Container c = new Container();
